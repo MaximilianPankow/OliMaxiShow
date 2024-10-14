@@ -1,61 +1,59 @@
 import tkinter as tk
 from camera import Camera
 from squat_analyzer import SquatAnalyzer
-import cv2
+import cv2  # Importiere OpenCV für das Anzeigen der Kamera
 import threading
 
 class SquatAnalysisApp:
     def __init__(self):
-        # GUI-Setup
-        self.window = tk.Tk()
-        self.window.title("Squat Analysis")
+        self.root = tk.Tk()
+        self.root.title("Squat Analysis")
+        
+        # Initialize the camera
+        self.camera = Camera()  # Create an instance of Camera class
+        self.analyzer = SquatAnalyzer()  # Create an instance of SquatAnalyzer class
+        self.measurement_running = False  # Flag to control measurement state
 
-        # Kamera und Analyzer initialisieren
-        self.camera = Camera(0)  # Kamera 0 verwenden
-        self.analyzer = SquatAnalyzer()
+        # Create buttons
+        self.start_button = tk.Button(self.root, text="Start Measurement", command=self.start_measurement)
+        self.start_button.pack(pady=10)
 
-        # Start-Button in der GUI
-        self.start_button = tk.Button(self.window, text="Start Measurement", command=self.start_measurement)
-        self.start_button.pack()
+        self.stop_button = tk.Button(self.root, text="Stop Measurement", command=self.stop_measurement)
+        self.stop_button.pack(pady=10)
 
-        self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.reset_button = tk.Button(self.root, text="Reset Counter", command=self.reset_counter)
+        self.reset_button.pack(pady=10)
+
+        self.squat_count_label = tk.Label(self.root, text="Squat Count: 0")
+        self.squat_count_label.pack(pady=10)
+
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)  # Handle window close event
 
     def start_measurement(self):
-        # Starten der Messung in einem neuen Thread, um die GUI nicht zu blockieren
-        threading.Thread(target=self.measure).start()
+        self.measurement_running = True
+        self.camera.start()  # Start the camera
+        self.update_frame()  # Start the frame update loop
 
-    def measure(self):
-        while True:
-            ret, frame = self.camera.read_frame()
-            if not ret:
-                break
+    def update_frame(self):
+        if self.measurement_running:
+            frame = self.camera.get_frame()  # Get the current frame from the camera
+            if frame is not None:
+                cv2.imshow("Camera Feed", frame)  # Show the frame in OpenCV window
+            self.root.after(30, self.update_frame)  # Schedule the next frame update
 
-            # Analyse des aktuellen Frames (Berechnung der Winkel)
-            knee_angle, femur_angle = self.analyzer.analyze_frame(frame)
+    def stop_measurement(self):
+        self.measurement_running = False  # Stop the measurement loop
+        self.camera.stop()  # Stop the camera
+        cv2.destroyAllWindows()  # Close the OpenCV window if it’s open
 
-            if knee_angle is not None and femur_angle is not None:
-                # Überprüfen, ob die Kniebeuge gültig ist
-                if self.analyzer.is_valid_squat(knee_angle, femur_angle):
-                    print(f"Gültige Kniebeuge: Kniewinkel = {knee_angle}, Femurwinkel = {femur_angle}")
-                else:
-                    print(f"Ungültige Kniebeuge: Kniewinkel = {knee_angle}, Femurwinkel = {femur_angle}")
-
-            # Kamerabild im Fenster anzeigen
-            cv2.imshow("Squat Analysis", frame)
-
-            # Zum Beenden der Schleife 'q' drücken
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-
-        # Freigabe der Kamera und Schließen der Fenster
-        self.camera.release()
-        cv2.destroyAllWindows()
+    def reset_counter(self):
+        # Logic to reset the squat counter
+        self.squat_count_label.config(text="Squat Count: 0")
 
     def on_closing(self):
-        # Beenden der GUI
-        self.camera.release()
-        self.window.quit()
+        self.stop_measurement()  # Ensure measurement is stopped before closing
+        self.root.destroy()
 
 if __name__ == "__main__":
     app = SquatAnalysisApp()
-    app.window.mainloop()
+    app.root.mainloop()

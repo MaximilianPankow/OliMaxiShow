@@ -1,17 +1,25 @@
 import cv2
 
 class Camera:
-    def __init__(self, camera_index=0):  # Hier nehmen wir standardmäßig Kamera 0
-        self.cap = cv2.VideoCapture(camera_index)
-        if not self.cap.isOpened():
-            raise ValueError("Kamera konnte nicht geöffnet werden")
+    def __init__(self, camera_index=0):
+        self.camera_index = camera_index
+        self.cap = None
+        self.is_running = False
 
-    def read_frame(self):
-        ret, frame = self.cap.read()
-        if not ret:
-            print("Kein Frame von der Kamera gelesen")
-        return ret, frame
+    def start(self):
+        if self.cap is None:
+            self.cap = cv2.VideoCapture(self.camera_index)
+            self.is_running = True
 
-    def release(self):
-        # Freigeben der Kamera
-        self.cap.release()
+    def get_frame(self):
+        if self.is_running:
+            ret, frame = self.cap.read()
+            if ret:
+                return frame
+        return None
+
+    def stop(self):
+        if self.is_running:
+            self.is_running = False
+            self.cap.release()
+            self.cap = None

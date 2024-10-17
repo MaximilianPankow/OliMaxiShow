@@ -26,6 +26,12 @@ class SquatAnalysisApp:
         self.squat_count_label = tk.Label(self.root, text="Squat Count: 0")
         self.squat_count_label.pack(pady=10)
 
+        self.knee_angle_label = tk.Label(self.root, text="Knee Angle: N/A")
+        self.knee_angle_label.pack(pady=10)
+
+        self.femur_angle_label = tk.Label(self.root, text="Femur Angle: N/A")
+        self.femur_angle_label.pack(pady=10)
+
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)  # Handle window close event
 
     def start_measurement(self):
@@ -37,25 +43,27 @@ class SquatAnalysisApp:
         if self.measurement_running:
             frame = self.camera.get_frame()  # Get the current frame from the camera
             if frame is not None:
-                # Analysiere den Frame und erhalte den markierten Frame
-                frame_with_markers = self.analyzer.analyze_frame(frame)
+                knee_angle, femur_angle, frame_with_markers = self.analyzer.analyze_frame(frame)
 
-                # Zeige den Frame mit den markierten ArUco-Marker
+                if knee_angle is not None:
+                    self.knee_angle_label.config(text=f"Knee Angle: {knee_angle:.2f}°")
+                if femur_angle is not None:
+                    self.femur_angle_label.config(text=f"Femur Angle: {femur_angle:.2f}°")
+
                 cv2.imshow("Camera Feed", frame_with_markers)
 
-            self.root.after(30, self.update_frame)  # Schedule the next frame update
+            self.root.after(30, self.update_frame)
 
     def stop_measurement(self):
-        self.measurement_running = False  # Stop the measurement loop
-        self.camera.stop()  # Stop the camera
-        cv2.destroyAllWindows()  # Close the OpenCV window if it’s open
+        self.measurement_running = False
+        self.camera.stop()
+        cv2.destroyAllWindows()
 
     def reset_counter(self):
-        # Logic to reset the squat counter
         self.squat_count_label.config(text="Squat Count: 0")
 
     def on_closing(self):
-        self.stop_measurement()  # Ensure measurement is stopped before closing
+        self.stop_measurement()
         self.root.destroy()
 
 if __name__ == "__main__":

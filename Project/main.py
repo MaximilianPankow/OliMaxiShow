@@ -1,14 +1,13 @@
 import tkinter as tk
 from camera import Camera
 from squat_analyzer import SquatAnalyzer
-import cv2  # Importiere OpenCV für das Anzeigen der Kamera
-import threading
+import cv2
 
 class SquatAnalysisApp:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Squat Analysis")
-        
+
         # Initialize the camera
         self.camera = Camera()  # Create an instance of Camera class
         self.analyzer = SquatAnalyzer()  # Create an instance of SquatAnalyzer class
@@ -38,7 +37,12 @@ class SquatAnalysisApp:
         if self.measurement_running:
             frame = self.camera.get_frame()  # Get the current frame from the camera
             if frame is not None:
-                cv2.imshow("Camera Feed", frame)  # Show the frame in OpenCV window
+                # Analysiere den Frame und erhalte den markierten Frame
+                frame_with_markers = self.analyzer.analyze_frame(frame)
+
+                # Zeige den Frame mit den markierten ArUco-Marker
+                cv2.imshow("Camera Feed", frame_with_markers)
+
             self.root.after(30, self.update_frame)  # Schedule the next frame update
 
     def stop_measurement(self):

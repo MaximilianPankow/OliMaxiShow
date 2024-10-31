@@ -23,9 +23,11 @@ class SquatAnalysisApp:
         self.reset_button = tk.Button(self.root, text="Reset Counter", command=self.reset_counter)
         self.reset_button.pack(pady=10)
 
+        # Squat count label
         self.squat_count_label = tk.Label(self.root, text="Squat Count: 0")
         self.squat_count_label.pack(pady=10)
 
+        # Labels to display the angles
         self.knee_angle_label = tk.Label(self.root, text="Knee Angle: N/A")
         self.knee_angle_label.pack(pady=10)
 
@@ -43,27 +45,35 @@ class SquatAnalysisApp:
         if self.measurement_running:
             frame = self.camera.get_frame()  # Get the current frame from the camera
             if frame is not None:
+                # Analyze the frame and get the knee and femur angles
                 knee_angle, femur_angle, frame_with_markers = self.analyzer.analyze_frame(frame)
 
+                # Display the angles in the GUI
                 if knee_angle is not None:
                     self.knee_angle_label.config(text=f"Knee Angle: {knee_angle:.2f}°")
                 if femur_angle is not None:
                     self.femur_angle_label.config(text=f"Femur Angle: {femur_angle:.2f}°")
 
+                # Update the squat count in the GUI
+                self.squat_count_label.config(text=f"Squat Count: {self.analyzer.squat_counter}")
+
+                # Display the frame with markers
                 cv2.imshow("Camera Feed", frame_with_markers)
 
-            self.root.after(30, self.update_frame)
+            self.root.after(30, self.update_frame)  # Schedule the next frame update
 
     def stop_measurement(self):
-        self.measurement_running = False
-        self.camera.stop()
-        cv2.destroyAllWindows()
+        self.measurement_running = False  # Stop the measurement loop
+        self.camera.stop()  # Stop the camera
+        cv2.destroyAllWindows()  # Close the OpenCV window if it’s open
 
     def reset_counter(self):
-        self.squat_count_label.config(text="Squat Count: 0")
+        # Reset the squat counter
+        self.analyzer.squat_counter = 0
+        self.squat_count_label.config(text="Squat Count: 0")  # Update the GUI
 
     def on_closing(self):
-        self.stop_measurement()
+        self.stop_measurement()  # Ensure measurement is stopped before closing
         self.root.destroy()
 
 if __name__ == "__main__":

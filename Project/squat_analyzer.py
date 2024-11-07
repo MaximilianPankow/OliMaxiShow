@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import winsound  # Importiere winsound für Beep-Ton
 
 class SquatAnalyzer:
     def __init__(self):
@@ -34,6 +35,10 @@ class SquatAnalyzer:
         
         # Der Winkel ist einfach die Differenz in der y-Achse
         return y_diff
+
+    def play_sound(self):
+        # Erzeugt einen kurzen Beep-Ton für einen validen Squat
+        winsound.Beep(1000, 200)  # 1000 Hz Frequenz, 200 ms Dauer
 
     def analyze_frame(self, frame):
         # Bild in Graustufen umwandeln für die Marker-Erkennung
@@ -85,6 +90,7 @@ class SquatAnalyzer:
                     if not self.squat_in_progress:
                         self.squat_counter += 1  # Zähle nur, wenn ein neuer Squat beginnt
                         self.squat_in_progress = True  # Setze das Flag, um mehrfaches Zählen zu verhindern
+                        self.play_sound()  # Spiele den Beep-Ton ab, wenn der Counter hochgeht
                 else:
                     self.squat_in_progress = False  # Setze das Flag zurück, wenn der Athlet aufsteht
 
